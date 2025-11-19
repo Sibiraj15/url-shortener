@@ -165,7 +165,7 @@
 
         async function fetchLinkStats(code) {
             try {
-                const response = await fetch(`http://localhost:3000/api/links/${code}`);
+                const response = await fetch(`/api/links/${code}`);
                 
                 if (!response.ok) {
                     showError();
