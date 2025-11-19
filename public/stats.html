@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Stats - LinkShort</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 rounded-lg p-2">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-900">LinkShort</h1>
+                </div>
+                <a href="/" class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 font-medium">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="flex items-center justify-center py-20">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading stats...</p>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="text-center py-20 hidden">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Link Not Found</h2>
+            <p class="text-gray-600 mb-6">The link you're looking for doesn't exist.</p>
+            <a href="/" class="inline-flex items-center space-x-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Content -->
+        <div id="statsContent" class="space-y-6 hidden">
+            <!-- Header Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Link Statistics</h2>
+                        <div class="flex items-center space-x-2">
+                            <code id="linkCode" class="text-lg font-mono bg-indigo-50 text-indigo-700 px-3 py-1 rounded"></code>
+                            <button onclick="copyShortUrl()" class="text-gray-400 hover:text-gray-600" title="Copy short URL">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Short URL</label>
+                        <div class="flex items-center space-x-2">
+                            <code id="shortUrl" class="flex-1 text-sm bg-gray-50 px-4 py-2 rounded border border-gray-200"></code>
+                            <button onclick="copyShortUrl()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Target URL</label>
+                        <div class="flex items-center space-x-2">
+                            <div id="targetUrl" class="flex-1 text-sm bg-gray-50 px-4 py-2 rounded border border-gray-200 truncate"></div>
+                            <a id="targetUrlLink" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors" title="Visit URL">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-600">Total Clicks</h3>
+                        <div class="bg-green-100 rounded-full p-2">
+                            <i class="fas fa-mouse-pointer text-green-600"></i>
+                        </div>
+                    </div>
+                    <p id="totalClicks" class="text-3xl font-bold text-gray-900">0</p>
+                    <p class="text-sm text-gray-500 mt-1">All time</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-600">Created</h3>
+                        <div class="bg-blue-100 rounded-full p-2">
+                            <i class="fas fa-calendar text-blue-600"></i>
+                        </div>
+                    </div>
+                    <p id="createdDate" class="text-lg font-semibold text-gray-900">-</p>
+                    <p id="createdAgo" class="text-sm text-gray-500 mt-1">-</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-600">Last Clicked</h3>
+                        <div class="bg-purple-100 rounded-full p-2">
+                            <i class="fas fa-clock text-purple-600"></i>
+                        </div>
+                    </div>
+                    <p id="lastClickedDate" class="text-lg font-semibold text-gray-900">Never</p>
+                    <p id="lastClickedAgo" class="text-sm text-gray-500 mt-1">No clicks yet</p>
+                </div>
+            </div>
+
+            <!-- Details Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Link Details</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-600 font-medium">Link ID</span>
+                        <code id="linkId" class="text-sm font-mono text-gray-900"></code>
+                    </div>
+                    <div class="flex justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-600 font-medium">Short Code</span>
+                        <code id="linkCodeDetail" class="text-sm font-mono text-gray-900"></code>
+                    </div>
+                    <div class="flex justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-600 font-medium">Created At</span>
+                        <span id="createdAtFull" class="text-sm text-gray-900"></span>
+                    </div>
+                    <div class="flex justify-between py-3">
+                        <span class="text-gray-600 font-medium">Last Clicked</span>
+                        <span id="lastClickedFull" class="text-sm text-gray-900"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex justify-center">
+                <a id="testRedirect" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-2 bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>Test Redirect</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let linkData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const pathParts = window.location.pathname.split('/');
+            const code = pathParts[pathParts.length - 1];
+            fetchLinkStats(code);
+        });
+
+        async function fetchLinkStats(code) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/links/${code}`);
+                
+                if (!response.ok) {
+                    showError();
+                    return;
+                }
+
+                linkData = await response.json();
+                renderStats(linkData);
+                
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('statsContent').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                showError();
+            }
+        }
+
+        function showError() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        function renderStats(link) {
+            const shortUrl = `${window.location.origin}/${link.code}`;
+            
+            document.getElementById('linkCode').textContent = `/${link.code}`;
+            document.getElementById('shortUrl').textContent = shortUrl;
+            document.getElementById('targetUrl').textContent = link.targetUrl;
+            document.getElementById('targetUrlLink').href = link.targetUrl;
+            document.getElementById('totalClicks').textContent = link.clicks;
+            
+            // Created date
+            const createdDate = new Date(link.createdAt);
+            document.getElementById('createdDate').textContent = createdDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            document.getElementById('createdAgo').textContent = `${Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24))} days ago`;
+            
+            // Last clicked
+            if (link.lastClicked) {
+                const lastClicked = new Date(link.lastClicked);
+                document.getElementById('lastClickedDate').textContent = lastClicked.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+                document.getElementById('lastClickedAgo').textContent = `${Math.floor((Date.now() - lastClicked.getTime()) / (1000 * 60 * 60))}h ago`;
+                document.getElementById('lastClickedFull').textContent = formatDateLong(link.lastClicked);
+            } else {
+                document.getElementById('lastClickedDate').textContent = 'Never';
+                document.getElementById('lastClickedAgo').textContent = 'No clicks yet';
+                document.getElementById('lastClickedFull').textContent = 'Never';
+            }
+            
+            // Details
+            document.getElementById('linkId').textContent = link._id;
+            document.getElementById('linkCodeDetail').textContent = link.code;
+            document.getElementById('createdAtFull').textContent = formatDateLong(link.createdAt);
+            
+            // Test redirect button
+            document.getElementById('testRedirect').href = `/${link.code}`;
+        }
+
+        function copyShortUrl() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            });
+        }
+
+        function formatDateLong(dateStr) {
+            if (!dateStr) return 'Never';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>

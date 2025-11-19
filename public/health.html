@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health - LinkShort</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 rounded-lg p-2">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-900">LinkShort</h1>
+                </div>
+                <nav class="flex space-x-4">
+                    <a href="/" class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100">Dashboard</a>
+                    <a href="/health" class="px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white">Health</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="flex items-center justify-center py-20">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Checking system health...</p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div id="healthContent" class="hidden">
+            <!-- Status Banner -->
+            <div id="statusBanner" class="bg-white rounded-xl shadow-sm p-6 border-2 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div id="statusIcon" class="text-5xl"></div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">System Status</h2>
+                            <p id="statusText" class="text-lg mt-1"></p>
+                        </div>
+                    </div>
+                    <button onclick="fetchHealth()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Health Details -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Details</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-700 font-medium">API Status</span>
+                        <span id="apiStatus" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                            <i class="fas fa-circle mr-2 text-xs"></i>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-700 font-medium">Database</span>
+                        <span id="dbStatus" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                            <i class="fas fa-circle mr-2 text-xs"></i>
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-700 font-medium">Version</span>
+                        <span id="version" class="text-gray-900 font-mono"></span>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                        <span class="text-gray-700 font-medium">Last Check</span>
+                        <span id="timestamp" class="text-gray-900"></span>
+                    </div>
+                    <div class="flex items-center justify-between py-3">
+                        <span class="text-gray-700 font-medium">Environment</span>
+                        <span id="environment" class="text-gray-900 font-mono"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Endpoint -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Health Check Endpoint</h3>
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <code class="text-sm font-mono text-gray-700">GET /healthz</code>
+                        <button onclick="copyEndpoint()" class="text-gray-600 hover:text-gray-900">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <pre id="healthResponse" class="text-xs text-gray-600 overflow-x-auto"></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let healthData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchHealth();
+        });
+
+        async function fetchHealth() {
+            const loadingState = document.getElementById('loadingState');
+            const healthContent = document.getElementById('healthContent');
+            
+            loadingState.classList.remove('hidden');
+            healthContent.classList.add('hidden');
+
+            try {
+                const response = await fetch('/healthz');
+                healthData = await response.json();
+                
+                renderHealth(healthData, response.ok);
+                
+                loadingState.classList.add('hidden');
+                healthContent.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error fetching health:', error);
+                renderHealth({ ok: false, error: error.message }, false);
+                loadingState.classList.add('hidden');
+                healthContent.classList.remove('hidden');
+            }
+        }
+
+        function renderHealth(data, isOk) {
+            const statusBanner = document.getElementById('statusBanner');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            
+            if (isOk && data.ok) {
+                statusBanner.classList.remove('border-red-200', 'bg-red-50');
+                statusBanner.classList.add('border-green-200', 'bg-green-50');
+                statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+                statusText.innerHTML = '<span class="text-green-700 font-medium">All Systems Operational</span>';
+                
+                document.getElementById('apiStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                document.getElementById('apiStatus').innerHTML = '<i class="fas fa-circle mr-2 text-xs"></i>Operational';
+            } else {
+                statusBanner.classList.remove('border-green-200', 'bg-green-50');
+                statusBanner.classList.add('border-red-200', 'bg-red-50');
+                statusIcon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+                statusText.innerHTML = '<span class="text-red-700 font-medium">System Issues Detected</span>';
+                
+                document.getElementById('apiStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                document.getElementById('apiStatus').innerHTML = '<i class="fas fa-circle mr-2 text-xs"></i>Error';
+            }
+            
+            // Database status
+            const dbStatus = document.getElementById('dbStatus');
+            if (data.database === 'connected') {
+                dbStatus.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                dbStatus.innerHTML = '<i class="fas fa-circle mr-2 text-xs"></i>Connected';
+            } else {
+                dbStatus.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                dbStatus.innerHTML = '<i class="fas fa-circle mr-2 text-xs"></i>Disconnected';
+            }
+            
+            // Other details
+            document.getElementById('version').textContent = data.version || 'N/A';
+            document.getElementById('timestamp').textContent = data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A';
+            document.getElementById('environment').textContent = data.environment || 'production';
+            
+            // Response JSON
+            document.getElementById('healthResponse').textContent = JSON.stringify(data, null, 2);
+        }
+
+        function copyEndpoint() {
+            const endpoint = `${window.location.origin}/healthz`;
+            navigator.clipboard.writeText(endpoint).then(() => {
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
